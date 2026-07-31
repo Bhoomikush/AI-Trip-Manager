@@ -4,6 +4,8 @@ import { Problem } from "@/components/sections/problem";
 import { Features } from "@/components/sections/features";
 import { AIPreview } from "@/components/sections/ai-preview";
 import { Collaboration } from "@/components/sections/collaboration";
+import { ExpensePreview } from "@/components/sections/expense-preview";
+import { OCRPreview } from "@/components/sections/ocr-preview";
 
 export default function Home() {
   return (
@@ -14,6 +16,8 @@ export default function Home() {
       <Features />
       <AIPreview />
       <Collaboration />
+      <ExpensePreview />
+      <OCRPreview />
     </main>
   );
 }
