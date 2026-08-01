@@ -2,6 +2,7 @@ import { OverviewCards } from "@/components/dashboard/overview-cards";
 import { RecentTrips } from "@/components/dashboard/recent-trips";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { AIInsights } from "@/components/dashboard/ai-insights";
+import { RecentActivity } from "@/components/dashboard/recent-activity";
 
 export default function DashboardPage() {
     return (
@@ -20,7 +21,10 @@ export default function DashboardPage() {
 
             <AIInsights />
 
-            <RecentTrips />
+            <div className="grid gap-6 lg:grid-cols-2">
+                <RecentTrips />
+                <RecentActivity />
+            </div>
 
             <QuickActions />
         </div>
