@@ -1,4 +1,7 @@
 import { OverviewCards } from "@/components/dashboard/overview-cards";
+import { RecentTrips } from "@/components/dashboard/recent-trips";
+import { QuickActions } from "@/components/dashboard/quick-actions";
+import { AIInsights } from "@/components/dashboard/ai-insights";
 
 export default function DashboardPage() {
     return (
@@ -14,6 +17,12 @@ export default function DashboardPage() {
             </div>
 
             <OverviewCards />
+
+            <AIInsights />
+
+            <RecentTrips />
+
+            <QuickActions />
         </div>
     );
 }
