@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,24 +15,27 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "TripSync AI — Plan Group Trips Together, Powered by AI",
-    template: "%s | TripSync AI",
+    default: "Tripzy — Plan Group Trips Together, Powered by AI",
+    template: "%s | Tripzy",
   },
   description:
-    "TripSync AI is a collaborative travel planning platform for groups. Generate AI itineraries, split expenses, and organize your whole trip in one shared workspace.",
+    "Tripzy is an AI-powered collaborative travel planning platform. Plan trips, generate AI itineraries, split expenses, scan receipts, and manage everything in one shared workspace.",
   keywords: [
+    "Tripzy",
     "group trip planner",
     "AI itinerary generator",
-    "travel expense splitter",
-    "collaborative travel planning app",
+    "travel planner",
+    "expense splitter",
+    "receipt OCR",
+    "collaborative travel planning",
   ],
   icons: {
     icon: "/favicon.ico",
   },
   openGraph: {
-    title: "TripSync AI — Plan Group Trips Together, Powered by AI",
+    title: "Tripzy — Plan Group Trips Together, Powered by AI",
     description:
-      "One shared workspace for group travel — AI itineraries, expense splitting, and real-time collaboration.",
+      "One shared workspace for group travel — AI itineraries, expense splitting, maps, receipts, and collaboration.",
     type: "website",
     images: ["/og-image.png"],
   },
@@ -47,11 +51,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
+    <ClerkProvider>
+      <html
+        lang="en"
+        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      >
+        <body className="min-h-full flex flex-col">
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

@@ -8,6 +8,7 @@ import { ExpensePreview } from "@/components/sections/expense-preview";
 import { OCRPreview } from "@/components/sections/ocr-preview";
 import { MapsPreview } from "@/components/sections/maps-preview";
 import { DashboardPreview } from "@/components/sections/dashboard-preview";
+import { Footer } from "@/components/layout/footer";
 
 export default function Home() {
   return (
@@ -22,6 +23,7 @@ export default function Home() {
       <OCRPreview />
       <MapsPreview />
       <DashboardPreview />
+      <Footer />
     </main>
   );
 }
