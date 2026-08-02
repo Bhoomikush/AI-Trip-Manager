@@ -3,13 +3,16 @@ import { RecentTrips } from "@/components/dashboard/recent-trips";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { AIInsights } from "@/components/dashboard/ai-insights";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
+import { syncUser } from "@/lib/sync-user";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+    const profile = await syncUser();
+
     return (
         <div className="space-y-8">
             <div>
                 <h2 className="text-3xl font-bold text-foreground">
-                    Welcome back, Bhoomi 👋
+                    Welcome back, {profile?.name || "Traveler"} 👋
                 </h2>
 
                 <p className="mt-2 text-muted-foreground">
