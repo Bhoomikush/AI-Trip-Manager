@@ -1,10 +1,15 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getTripById, getTripMembers } from "@/lib/trips";
+import { getTripById, getTripMembers, getExpenseSummary, getExpenseCategorySummary, getTripBalances, getSettlementPlan } from "@/lib/trips";
+import { getTripExpenses } from "@/lib/expenses";
 import { DeleteTripButton } from "@/components/dashboard/delete-trip-button";
 import { currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { TripMembersSection } from "@/components/dashboard/trip-members-section";
+import { ExpenseListSection } from "@/components/dashboard/expense-list-section";
+import { ExpenseSummaryDashboard } from "@/components/dashboard/expense-summary-dashboard";
+import { TripBalancesSection } from "@/components/dashboard/trip-balances-section";
+import { SettlementPlanSection } from "@/components/dashboard/settlement-plan-section";
 import {
     ArrowLeft,
     Calendar,
@@ -16,6 +21,7 @@ import {
     Edit2,
     Clock,
     FileText,
+    Plus,
 } from "lucide-react";
 
 interface PageProps {
@@ -86,6 +92,11 @@ export default async function TripDetailPage({ params }: PageProps) {
 
     const isOwner = trip.profile_id === profile.id;
     const members = await getTripMembers(trip.id);
+    const expenses = await getTripExpenses(trip.id);
+    const summary = await getExpenseSummary(trip.id, members.length);
+    const categorySummary = await getExpenseCategorySummary(trip.id);
+    const balances = await getTripBalances(trip.id);
+    const settlementPlan = await getSettlementPlan(trip.id);
 
     const statusInfo = statusStyles[trip.status] || {
         bg: "bg-slate-500/10 text-slate-500 border-slate-500/20",
@@ -134,6 +145,13 @@ export default async function TripDetailPage({ params }: PageProps) {
 
                 <div className="flex items-center gap-3">
                     <Link
+                        href={`/dashboard/trips/${trip.id}/expenses/new`}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/95 rounded-lg transition text-sm font-medium"
+                    >
+                        <Plus className="h-4 w-4" />
+                        Add Expense
+                    </Link>
+                    <Link
                         href={`/dashboard/trips/${trip.id}/edit`}
                         className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg bg-card text-foreground hover:bg-muted/40 hover:border-primary/30 transition text-sm font-medium"
                     >
@@ -143,6 +161,19 @@ export default async function TripDetailPage({ params }: PageProps) {
                     <DeleteTripButton tripId={trip.id} tripTitle={trip.title} />
                 </div>
             </div>
+
+            {/* Expense Summary Dashboard */}
+            <ExpenseSummaryDashboard
+                summary={summary}
+                categorySummary={categorySummary}
+                currency={trip.currency}
+            />
+
+            {/* Trip Balances Section */}
+            <TripBalancesSection balances={balances} currency={trip.currency} />
+
+            {/* Settlement Plan Section */}
+            <SettlementPlanSection tripId={trip.id} plan={settlementPlan} currency={trip.currency} />
 
             {/* Main content grid */}
             <div className="grid gap-8 md:grid-cols-3">
@@ -171,7 +202,10 @@ export default async function TripDetailPage({ params }: PageProps) {
                             </div>
                         </button>
 
-                        <button className="flex items-center gap-4 bg-card border border-border p-5 rounded-xl hover:border-primary/40 hover:bg-muted/10 transition text-left opacity-60 cursor-not-allowed">
+                        <Link
+                            href={`/dashboard/trips/${trip.id}/expenses/new`}
+                            className="flex items-center gap-4 bg-card border border-border p-5 rounded-xl hover:border-primary/40 hover:bg-muted/10 transition text-left cursor-pointer"
+                        >
                             <div className="p-3 bg-primary/10 rounded-lg">
                                 <Wallet className="h-6 w-6 text-primary" />
                             </div>
@@ -179,7 +213,7 @@ export default async function TripDetailPage({ params }: PageProps) {
                                 <h3 className="font-semibold text-foreground">Expenses</h3>
                                 <p className="text-xs text-muted-foreground">Track splits & budget</p>
                             </div>
-                        </button>
+                        </Link>
 
                         <button className="flex items-center gap-4 bg-card border border-border p-5 rounded-xl hover:border-primary/40 hover:bg-muted/10 transition text-left opacity-60 cursor-not-allowed">
                             <div className="p-3 bg-primary/10 rounded-lg">
@@ -240,6 +274,9 @@ export default async function TripDetailPage({ params }: PageProps) {
 
                     {/* Members Section */}
                     <TripMembersSection tripId={trip.id} isOwner={isOwner} initialMembers={members} />
+
+                    {/* Expenses Section */}
+                    <ExpenseListSection tripId={trip.id} expenses={expenses} totalMembers={members.length} />
                 </div>
             </div>
         </div>
