@@ -150,10 +150,13 @@ export function RecentTrips({ trips }: RecentTripsProps) {
                                 </div>
 
                                 <div className="flex items-center justify-end sm:justify-start">
-                                    <button className="flex items-center gap-1 text-sm font-medium text-primary transition hover:gap-2">
+                                    <Link
+                                        href={`/dashboard/trips/${trip.id}`}
+                                        className="flex items-center gap-1 text-sm font-medium text-primary transition hover:gap-2"
+                                    >
                                         Open
                                         <ArrowRight className="h-4 w-4" />
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
                         );
