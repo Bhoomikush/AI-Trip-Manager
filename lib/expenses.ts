@@ -203,30 +203,50 @@ export async function createExpenseShares(expenseId: string) {
         throw new Error("Expense not found.");
     }
 
-    // 2. Fetch Trip Members
+    // 2. Fetch Trip Owner
+    const { data: trip, error: tripError } = await supabaseAdmin
+        .from("trips")
+        .select("profile_id")
+        .eq("id", expense.trip_id)
+        .single();
+
+    if (tripError || !trip) {
+        throw new Error("Trip not found.");
+    }
+
+    // 3. Fetch Trip Members
     const { data: members, error: membersError } = await supabaseAdmin
         .from("trip_members")
         .select("profile_id")
         .eq("trip_id", expense.trip_id);
 
-    if (membersError || !members || members.length === 0) {
-        throw new Error("No trip members found to split expense.");
+    if (membersError) {
+        throw new Error("Failed to fetch trip members.");
     }
 
-    // 3. Calculate Split
-    const totalMembers = members.length;
+    // Combine members and trip owner to get the full unique list of profile IDs
+    const profileIds = new Set<string>();
+    profileIds.add(trip.profile_id);
+    if (members) {
+        members.forEach((m) => profileIds.add(m.profile_id));
+    }
+
+    const uniqueProfileIds = Array.from(profileIds);
+    const totalMembers = uniqueProfileIds.length;
+
+    // 4. Calculate Split
     const amount = expense.amount;
     const shareAmount = Math.round((amount / totalMembers) * 100) / 100;
 
-    // 4. Create shares array
-    const shares = members.map((member) => ({
+    // 5. Create shares array
+    const shares = uniqueProfileIds.map((profileId) => ({
         expense_id: expenseId,
-        profile_id: member.profile_id,
+        profile_id: profileId,
         amount: shareAmount,
         is_settled: false,
     }));
 
-    // 5. Insert shares
+    // 6. Insert shares
     const { error: insertSharesError } = await supabaseAdmin
         .from("expense_shares")
         .insert(shares);

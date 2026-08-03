@@ -741,9 +741,8 @@ export async function getTripBalances(tripId: string): Promise<MemberBalance[]> 
     }
 
     // 6. Retrieve all expense shares for this trip's expenses
-    // Retrieve shares where expense_id belongs to one of this trip's expenses
     const expenseIds = expenses.map((exp) => exp.id);
-    let shares: any[] = [];
+    let dbShares: any[] = [];
     
     if (expenseIds.length > 0) {
         const { data: sharesData, error: sharesError } = await supabaseAdmin
@@ -755,8 +754,25 @@ export async function getTripBalances(tripId: string): Promise<MemberBalance[]> 
             console.error("Failed to fetch expense shares:", sharesError);
             throw new Error("Failed to load expense shares for balance calculation.");
         }
-        shares = sharesData || [];
+        dbShares = sharesData || [];
     }
+
+    // Reconstruct list of shares, falling back to dynamic equal split virtual shares for legacy expenses
+    const shares = expenses.flatMap((exp) => {
+        const expenseShares = dbShares.filter((s) => s.expense_id === exp.id);
+        if (expenseShares.length > 0) {
+            return expenseShares;
+        }
+        // Fallback: split equally among all members
+        const totalMembers = membersList.length;
+        const shareAmount = totalMembers > 0 ? Math.round((exp.amount / totalMembers) * 100) / 100 : 0;
+        return membersList.map((m) => ({
+            expense_id: exp.id,
+            profile_id: m.profile_id,
+            amount: shareAmount,
+            is_settled: false,
+        }));
+    });
 
     // 7. Calculate Total Paid, Total Owed, and Net Balance for each member
     const balances: MemberBalance[] = membersList.map((member) => {
