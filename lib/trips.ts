@@ -60,3 +60,34 @@ export async function createTrip(input: CreateTripInput) {
 
     return trip;
 }
+
+export async function getTrips() {
+    const user = await currentUser();
+    if (!user) {
+        return [];
+    }
+
+    const { data: profile, error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("clerk_user_id", user.id)
+        .single();
+
+    if (profileError || !profile) {
+        return [];
+    }
+
+    const { data: trips, error: tripsError } = await supabaseAdmin
+        .from("trips")
+        .select("*")
+        .eq("profile_id", profile.id)
+        .order("created_at", { ascending: false });
+
+    if (tripsError) {
+        console.error("Error fetching trips:", tripsError);
+        return [];
+    }
+
+    return trips;
+}
+
