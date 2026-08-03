@@ -4,6 +4,7 @@ import {
     Sparkles,
     Wallet,
 } from "lucide-react";
+import Link from "next/link";
 
 const ACTIONS = [
     {
@@ -37,18 +38,32 @@ export function QuickActions() {
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 {ACTIONS.map((action) => (
-                    <button
-                        key={action.title}
-                        className="flex items-center gap-3 rounded-lg border border-border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40"
-                    >
-                        <div className="rounded-lg bg-primary/10 p-3">
-                            <action.icon className="h-5 w-5 text-primary" />
-                        </div>
-
-                        <span className="font-medium text-foreground">
-                            {action.title}
-                        </span>
-                    </button>
+                    action.title === "Create Trip" ? (
+                        <Link
+                            key={action.title}
+                            href="/dashboard/trips/new"
+                            className="flex items-center gap-3 rounded-lg border border-border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40"
+                        >
+                            <div className="rounded-lg bg-primary/10 p-3">
+                                <action.icon className="h-5 w-5 text-primary" />
+                            </div>
+                            <span className="font-medium text-foreground">
+                                {action.title}
+                            </span>
+                        </Link>
+                    ) : (
+                        <button
+                            key={action.title}
+                            className="flex items-center gap-3 rounded-lg border border-border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40"
+                        >
+                            <div className="rounded-lg bg-primary/10 p-3">
+                                <action.icon className="h-5 w-5 text-primary" />
+                            </div>
+                            <span className="font-medium text-foreground">
+                                {action.title}
+                            </span>
+                        </button>
+                    )
                 ))}
             </div>
         </section>
