@@ -10,6 +10,7 @@ import { ExpenseListSection } from "@/components/dashboard/expense-list-section"
 import { ExpenseSummaryDashboard } from "@/components/dashboard/expense-summary-dashboard";
 import { TripBalancesSection } from "@/components/dashboard/trip-balances-section";
 import { SettlementPlanSection } from "@/components/dashboard/settlement-plan-section";
+import { AIItinerarySection } from "@/components/dashboard/ai-itinerary-section";
 import {
     ArrowLeft,
     Calendar,
@@ -190,6 +191,9 @@ export default async function TripDetailPage({ params }: PageProps) {
                         </p>
                     </div>
 
+                    {/* AI Itinerary Planner section */}
+                    <AIItinerarySection trip={trip} />
+
                     {/* Quick Tools Placeholder Dashboard */}
                     <div className="grid gap-4 sm:grid-cols-2">
                         <button className="flex items-center gap-4 bg-card border border-border p-5 rounded-xl hover:border-primary/40 hover:bg-muted/10 transition text-left opacity-60 cursor-not-allowed">
@@ -215,7 +219,10 @@ export default async function TripDetailPage({ params }: PageProps) {
                             </div>
                         </Link>
 
-                        <button className="flex items-center gap-4 bg-card border border-border p-5 rounded-xl hover:border-primary/40 hover:bg-muted/10 transition text-left opacity-60 cursor-not-allowed">
+                        <a
+                            href="#ai-itinerary-planner"
+                            className="flex items-center gap-4 bg-card border border-border p-5 rounded-xl hover:border-primary/40 hover:bg-muted/10 transition text-left cursor-pointer"
+                        >
                             <div className="p-3 bg-primary/10 rounded-lg">
                                 <Sparkles className="h-6 w-6 text-primary" />
                             </div>
@@ -223,7 +230,7 @@ export default async function TripDetailPage({ params }: PageProps) {
                                 <h3 className="font-semibold text-foreground">AI Itinerary</h3>
                                 <p className="text-xs text-muted-foreground">Generate day-wise plans</p>
                             </div>
-                        </button>
+                        </a>
 
                         <button className="flex items-center gap-4 bg-card border border-border p-5 rounded-xl hover:border-primary/40 hover:bg-muted/10 transition text-left opacity-60 cursor-not-allowed">
                             <div className="p-3 bg-primary/10 rounded-lg">
