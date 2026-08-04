@@ -15,12 +15,14 @@ const ALLOWED_CATEGORIES = [
 ];
 
 export interface CreateExpenseInput {
+    id?: string;
     tripId: string;
     title: string;
     amount: number;
     currency: string;
     category: string;
     expenseDate: string;
+    receiptUrl?: string;
 }
 
 // Helper to check if a user profile is a member of the trip (owner or in trip_members)
@@ -94,6 +96,7 @@ export async function createExpense(input: CreateExpenseInput) {
     const { data: expense, error: insertError } = await supabaseAdmin
         .from("expenses")
         .insert({
+            id: input.id,
             trip_id: input.tripId,
             paid_by: profile.id,
             title: input.title.trim(),
@@ -101,6 +104,7 @@ export async function createExpense(input: CreateExpenseInput) {
             currency: input.currency.toUpperCase(),
             category: input.category,
             expense_date: input.expenseDate,
+            receipt_url: input.receiptUrl || null,
         })
         .select()
         .single();
