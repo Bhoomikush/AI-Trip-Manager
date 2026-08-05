@@ -533,7 +533,6 @@ export function CreateExpenseForm({ tripId }: CreateExpenseFormProps) {
                         className="relative flex items-center gap-4 p-4 border border-border rounded-lg bg-muted/40"
                     >
                         <div className="relative h-20 w-20 rounded-md overflow-hidden border border-border bg-background flex items-center justify-center">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img 
                                 src={receiptUrl} 
                                 alt="Receipt Preview" 
