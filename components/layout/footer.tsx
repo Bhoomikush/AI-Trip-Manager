@@ -22,33 +22,31 @@ const SOCIALS = [
 
 export function Footer() {
     return (
-        <footer className="border-t border-border px-6 py-12">
+        <footer id="faq" className="border-t border-border/80 bg-secondary/35 px-6 py-16">
             <div className="mx-auto max-w-6xl">
-                <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
 
                     {/* Brand */}
-                    <div>
-                        <p className="text-lg font-semibold text-foreground">
+                    <div className="space-y-3">
+                        <p className="text-xl font-heading font-extrabold text-foreground">
                             Tripzy
                         </p>
-
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            Plan smarter. Travel together.
+                        <p className="text-xs text-muted-foreground font-medium leading-relaxed max-w-[200px]">
+                            Plan smarter. Travel together. Earthy aesthetic planning.
                         </p>
                     </div>
 
                     {/* Quick Links */}
                     <div>
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="text-xs font-bold text-foreground uppercase tracking-wider">
                             Quick Links
                         </p>
-
-                        <ul className="mt-4 space-y-2.5">
+                        <ul className="mt-4 space-y-3">
                             {QUICK_LINKS.map((link) => (
                                 <li key={link.label}>
                                     <a
                                         href={link.href}
-                                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                                        className="text-xs font-medium text-muted-foreground transition-colors hover:text-accent"
                                     >
                                         {link.label}
                                     </a>
@@ -59,16 +57,15 @@ export function Footer() {
 
                     {/* Resources */}
                     <div>
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="text-xs font-bold text-foreground uppercase tracking-wider">
                             Resources
                         </p>
-
-                        <ul className="mt-4 space-y-2.5">
+                        <ul className="mt-4 space-y-3">
                             {RESOURCES.map((link) => (
                                 <li key={link.label}>
                                     <a
                                         href={link.href}
-                                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                                        className="text-xs font-medium text-muted-foreground transition-colors hover:text-accent"
                                     >
                                         {link.label}
                                     </a>
@@ -79,17 +76,16 @@ export function Footer() {
 
                     {/* Social Icons */}
                     <div>
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="text-xs font-bold text-foreground uppercase tracking-wider">
                             Connect
                         </p>
-
-                        <div className="mt-4 flex gap-3">
+                        <div className="mt-4 flex gap-2.5">
                             {SOCIALS.map((social) => (
                                 <a
                                     key={social.label}
                                     href={social.href}
                                     aria-label={social.label}
-                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                                    className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card/60 text-muted-foreground transition-all hover:border-primary/50 hover:bg-primary/10 hover:text-primary"
                                 >
                                     <social.icon className="h-4 w-4" />
                                 </a>
@@ -99,9 +95,10 @@ export function Footer() {
 
                 </div>
 
-                <p className="mt-10 border-t border-border pt-6 text-xs text-muted-foreground">
-                    © 2026 Tripzy. All rights reserved.
-                </p>
+                <div className="mt-12 border-t border-border/80 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] font-medium text-muted-foreground">
+                    <p>© 2026 Tripzy. All rights reserved.</p>
+                    <p>Designed for premium modern explorers.</p>
+                </div>
             </div>
         </footer>
     );

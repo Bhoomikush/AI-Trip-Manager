@@ -193,7 +193,7 @@ export default async function TripDetailPage({ params }: PageProps) {
                     </div>
 
                     {/* Interactive Map */}
-                    <div className="bg-card border border-border p-6 rounded-xl shadow-sm space-y-4">
+                    <div id="interactive-map" className="bg-card border border-border p-6 rounded-xl shadow-sm space-y-4">
                         <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                             <MapPin className="h-5 w-5 text-primary/70" />
                             Interactive Map
@@ -202,11 +202,16 @@ export default async function TripDetailPage({ params }: PageProps) {
                     </div>
 
                     {/* AI Itinerary Planner section */}
-                    <AIItinerarySection trip={trip} />
+                    <div id="ai-itinerary-planner">
+                        <AIItinerarySection trip={trip} />
+                    </div>
 
                     {/* Quick Tools Placeholder Dashboard */}
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <button className="flex items-center gap-4 bg-card border border-border p-5 rounded-xl hover:border-primary/40 hover:bg-muted/10 transition text-left opacity-60 cursor-not-allowed">
+                        <a
+                            href="#trip-members"
+                            className="flex items-center gap-4 bg-card border border-border p-5 rounded-xl hover:border-primary/40 hover:bg-muted/10 transition text-left cursor-pointer"
+                        >
                             <div className="p-3 bg-primary/10 rounded-lg">
                                 <Users className="h-6 w-6 text-primary" />
                             </div>
@@ -214,7 +219,7 @@ export default async function TripDetailPage({ params }: PageProps) {
                                 <h3 className="font-semibold text-foreground">Members</h3>
                                 <p className="text-xs text-muted-foreground">Manage group & invites</p>
                             </div>
-                        </button>
+                        </a>
 
                         <Link
                             href={`/dashboard/trips/${trip.id}/expenses/new`}
@@ -242,7 +247,10 @@ export default async function TripDetailPage({ params }: PageProps) {
                             </div>
                         </a>
 
-                        <button className="flex items-center gap-4 bg-card border border-border p-5 rounded-xl hover:border-primary/40 hover:bg-muted/10 transition text-left opacity-60 cursor-not-allowed">
+                        <a
+                            href="#expenses-section"
+                            className="flex items-center gap-4 bg-card border border-border p-5 rounded-xl hover:border-primary/40 hover:bg-muted/10 transition text-left cursor-pointer"
+                        >
                             <div className="p-3 bg-primary/10 rounded-lg">
                                 <Receipt className="h-6 w-6 text-primary" />
                             </div>
@@ -250,7 +258,7 @@ export default async function TripDetailPage({ params }: PageProps) {
                                 <h3 className="font-semibold text-foreground">Receipts</h3>
                                 <p className="text-xs text-muted-foreground">Store & scan trip bills</p>
                             </div>
-                        </button>
+                        </a>
                     </div>
                 </div>
 
@@ -290,10 +298,14 @@ export default async function TripDetailPage({ params }: PageProps) {
                     </div>
 
                     {/* Members Section */}
-                    <TripMembersSection tripId={trip.id} isOwner={isOwner} initialMembers={members} />
+                    <div id="trip-members">
+                        <TripMembersSection tripId={trip.id} isOwner={isOwner} initialMembers={members} />
+                    </div>
 
                     {/* Expenses Section */}
-                    <ExpenseListSection tripId={trip.id} expenses={expenses} totalMembers={members.length} />
+                    <div id="expenses-section">
+                        <ExpenseListSection tripId={trip.id} expenses={expenses} totalMembers={members.length} />
+                    </div>
                 </div>
             </div>
         </div>

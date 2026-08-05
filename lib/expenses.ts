@@ -118,6 +118,7 @@ export async function createExpense(input: CreateExpenseInput) {
     await createExpenseShares(expense.id);
 
     // 6. Revalidate Cache
+    revalidatePath("/dashboard");
     revalidatePath(`/dashboard/trips/${input.tripId}`);
 
     return expense;

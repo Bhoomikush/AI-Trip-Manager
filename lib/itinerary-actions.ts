@@ -3,6 +3,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "./supabase-admin";
 import { TripItinerary, TripDay, TripActivity } from "@/types/ai";
+import { revalidatePath } from "next/cache";
 
 /**
  * Helper to fetch the current user's profile ID from profiles table using Clerk userID.
@@ -184,6 +185,8 @@ export async function saveItineraryAction(tripId: string, itinerary: TripItinera
 
         if (daysInsertErr) throw daysInsertErr;
 
+        revalidatePath("/dashboard");
+        revalidatePath(`/dashboard/trips/${tripId}`);
         return { success: true };
     } catch (err: any) {
         console.error("Error in saveItineraryAction:", err);
@@ -207,6 +210,8 @@ export async function deleteItineraryAction(tripId: string): Promise<{ success: 
 
         if (error) throw error;
 
+        revalidatePath("/dashboard");
+        revalidatePath(`/dashboard/trips/${tripId}`);
         return { success: true };
     } catch (err: any) {
         console.error("Error in deleteItineraryAction:", err);

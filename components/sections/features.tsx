@@ -67,33 +67,33 @@ interface FeatureCardProps {
 function FeatureCard({ feature }: FeatureCardProps) {
     const IconComponent = feature.icon;
     return (
-        <div className="group relative flex flex-col justify-between h-full bg-white border border-slate-100 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_30px_-6px_rgba(99,102,241,0.12)] hover:border-indigo-500 hover:-translate-y-2 transition-all duration-300">
+        <div className="group relative flex flex-col justify-between h-full bg-card border border-border/40 rounded-3xl p-8 shadow-sm hover:shadow-md hover:border-primary/50 hover:-translate-y-1 transition-all duration-300">
             <div>
                 {/* Icon Wrapper */}
-                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                    <IconComponent className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-full bg-secondary text-primary flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-300">
+                    <IconComponent className="w-5.5 h-5.5" />
                 </div>
 
                 {/* Title */}
-                <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors duration-300">
+                <h3 className="text-xl font-heading font-extrabold text-foreground mb-3 tracking-tight group-hover:text-primary transition-colors duration-300">
                     {feature.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+                <p className="text-xs font-medium text-muted-foreground mb-6 leading-relaxed">
                     {feature.description}
                 </p>
             </div>
 
             <div>
                 {/* Divider */}
-                <div className="h-[1px] bg-slate-100 w-full mb-4" />
+                <div className="h-[1px] bg-border/40 w-full mb-5" />
 
                 {/* Feature Bullets */}
                 <ul className="space-y-2.5">
                     {feature.bullets.map((bullet, idx) => (
-                        <li key={idx} className="flex items-center text-xs font-semibold text-slate-600">
-                            <Check className="w-3.5 h-3.5 text-indigo-500 mr-2 flex-shrink-0 stroke-[3]" />
+                        <li key={idx} className="flex items-center text-xs font-semibold text-muted-foreground/90">
+                            <Check className="w-4 h-4 text-primary mr-2 flex-shrink-0 stroke-[2.5]" />
                             {bullet}
                         </li>
                     ))}
@@ -105,23 +105,23 @@ function FeatureCard({ feature }: FeatureCardProps) {
 
 export function Features() {
     return (
-        <section className="px-6 py-24 bg-white relative overflow-hidden">
+        <section id="features" className="px-6 py-24 bg-transparent relative overflow-hidden">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="text-center mb-20 max-w-3xl mx-auto">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 mb-4 uppercase tracking-wider">
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-primary/10 border border-primary/20 text-primary mb-4 uppercase tracking-widest">
                         Capabilities
                     </span>
-                    <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-                        Everything You Need To Plan Trips Together
+                    <h2 className="text-3xl sm:text-4xl font-heading font-extrabold tracking-tight text-foreground">
+                        Everything you need to plan trips together
                     </h2>
-                    <p className="mx-auto mt-4 text-base text-slate-500 leading-relaxed">
-                        Tripzy combines planning, collaboration, AI, maps and expense management into one powerful platform.
+                    <p className="mx-auto mt-4 text-xs sm:text-sm font-medium text-muted-foreground leading-relaxed">
+                        Tripzy combines planning, collaboration, AI, maps and expense management into one powerful, cohesive workspace.
                     </p>
                 </div>
 
                 {/* Features Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {FEATURES.map((feature) => (
                         <FeatureCard key={feature.title} feature={feature} />
                     ))}

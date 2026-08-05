@@ -88,7 +88,11 @@ export async function getTrips() {
 
     const { data: trips, error: tripsError } = await supabaseAdmin
         .from("trips")
-        .select("*")
+        .select(`
+            *,
+            trip_members (profile_id),
+            expenses (amount)
+        `)
         .eq("profile_id", profile.id)
         .order("created_at", { ascending: false });
 
@@ -511,6 +515,7 @@ export async function updateExpense(input: UpdateExpenseInput) {
     }
 
     // 8. Revalidate Cache
+    revalidatePath("/dashboard");
     revalidatePath(`/dashboard/trips/${expense.trip_id}`);
 
     return updatedExpense;
@@ -574,6 +579,7 @@ export async function deleteExpense(expenseId: string) {
     }
 
     // 7. Revalidate Cache
+    revalidatePath("/dashboard");
     revalidatePath(`/dashboard/trips/${expense.trip_id}`);
 }
 
@@ -961,7 +967,355 @@ export async function settleUpTransaction(tripId: string, debtorId: string, cred
     }
 
     // 6. Revalidate Cache
+    revalidatePath("/dashboard");
     revalidatePath(`/dashboard/trips/${tripId}`);
+}
+
+export type ActivityCategory = 
+  | "trip" 
+  | "expense" 
+  | "ai" 
+  | "member" 
+  | "destination" 
+  | "budget"
+  | "ocr";
+
+export interface Activity {
+  id: string;
+  actor: {
+    name: string;
+    avatarUrl?: string;
+    fallback: string;
+  };
+  action: string;
+  target: string;
+  category: ActivityCategory;
+  timestamp: string;
+}
+
+export async function getDashboardStats(providedTrips?: any[]) {
+    const user = await currentUser();
+    if (!user) return null;
+
+    const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("clerk_user_id", user.id)
+        .single();
+
+    if (!profile) return null;
+    const profileId = profile.id;
+
+    // Use provided trips if available, otherwise fetch memberships
+    let trips = providedTrips;
+    let tripIds: string[] = [];
+
+    if (trips) {
+        tripIds = trips.map((t) => t.id);
+    } else {
+        const { data: memberships } = await supabaseAdmin
+            .from("trip_members")
+            .select("trip_id")
+            .eq("profile_id", profileId);
+
+        tripIds = Array.from(new Set((memberships || []).map((m) => m.trip_id)));
+    }
+
+    if (tripIds.length === 0) {
+        return {
+            totalTrips: 0,
+            upcomingTrips: 0,
+            totalExpenses: 0,
+            moneyOwed: 0,
+            moneyReceivable: 0,
+            savedItineraries: 0,
+            friendsCount: 0,
+        };
+    }
+
+    if (!trips) {
+        const { data: fetchedTrips } = await supabaseAdmin
+            .from("trips")
+            .select("*")
+            .in("id", tripIds);
+        trips = fetchedTrips || [];
+    }
+
+    const now = new Date();
+    const upcomingTrips = (trips || []).filter(
+        (t) => new Date(t.end_date) >= now
+    ).length;
+
+    const totalTrips = trips.length;
+
+    // 3. Fetch all expenses for these trips
+    const { data: expenses } = await supabaseAdmin
+        .from("expenses")
+        .select("id, amount, paid_by, trip_id")
+        .in("trip_id", tripIds);
+
+    const totalExpenses = (expenses || []).reduce((sum, exp) => sum + Number(exp.amount), 0);
+
+    // 4. Calculate Net Balances to compute Owed/Receivable
+    let moneyOwed = 0;
+    let moneyReceivable = 0;
+
+    // Fetch all trip members for these trips
+    const { data: allMembers } = await supabaseAdmin
+        .from("trip_members")
+        .select("trip_id, profile_id")
+        .in("trip_id", tripIds);
+
+    const { data: allShares } = await supabaseAdmin
+        .from("expense_shares")
+        .select("amount, profile_id, expense_id, is_settled")
+        .in("expense_id", (expenses || []).map((e) => e.id));
+
+    const dbShares = allShares || [];
+    const membersByTrip: Record<string, string[]> = {};
+    (allMembers || []).forEach((m) => {
+        if (!membersByTrip[m.trip_id]) membersByTrip[m.trip_id] = [];
+        membersByTrip[m.trip_id].push(m.profile_id);
+    });
+
+    const uniqueCompanionIds = new Set<string>();
+    (allMembers || []).forEach((m) => {
+        if (m.profile_id !== profileId) {
+            uniqueCompanionIds.add(m.profile_id);
+        }
+    });
+
+    // Compute net balance per trip
+    tripIds.forEach((tripId) => {
+        const tripExpenses = (expenses || []).filter((e) => e.trip_id === tripId);
+        if (tripExpenses.length === 0) return;
+
+        const tripMembers = membersByTrip[tripId] || [];
+        
+        // Reconstruct shares for this trip
+        const shares = tripExpenses.flatMap((exp) => {
+            const expShares = dbShares.filter((s) => s.expense_id === exp.id);
+            if (expShares.length > 0) return expShares;
+            // Fallback equal split
+            const totalMembers = tripMembers.length;
+            const shareAmount = totalMembers > 0 ? Math.round((exp.amount / totalMembers) * 100) / 100 : 0;
+            return tripMembers.map((mId) => ({
+                expense_id: exp.id,
+                profile_id: mId,
+                amount: shareAmount,
+                is_settled: false,
+            }));
+        });
+
+        // Calculate User's Paid
+        const userExpenses = tripExpenses.filter((exp) => exp.paid_by === profileId);
+        const totalPaid = userExpenses.reduce((sum, exp) => {
+            const settledOtherShares = shares.filter(
+                (s) => s.expense_id === exp.id && s.profile_id !== profileId && s.is_settled
+            );
+            const totalSettled = settledOtherShares.reduce((sSum, s) => sSum + Number(s.amount), 0);
+            return sum + Number(exp.amount) - totalSettled;
+        }, 0);
+
+        // Calculate User's Owed
+        const userShares = shares.filter((share) => share.profile_id === profileId && !share.is_settled);
+        const totalOwed = userShares.reduce((sum, share) => sum + Number(share.amount), 0);
+
+        const balance = totalPaid - totalOwed;
+        if (balance > 0) {
+            moneyReceivable += balance;
+        } else if (balance < 0) {
+            moneyOwed += Math.abs(balance);
+        }
+    });
+
+    // 5. Fetch Saved AI Itineraries count
+    const { count: itineraryCount } = await supabaseAdmin
+        .from("trip_itineraries")
+        .select("*", { count: "exact", head: true })
+        .in("trip_id", tripIds);
+
+    return {
+        totalTrips: trips?.length || 0,
+        upcomingTrips,
+        totalExpenses,
+        moneyOwed: Math.round(moneyOwed * 100) / 100,
+        moneyReceivable: Math.round(moneyReceivable * 100) / 100,
+        savedItineraries: itineraryCount || 0,
+        friendsCount: uniqueCompanionIds.size,
+    };
+}
+
+export async function getDashboardActivities() {
+    const user = await currentUser();
+    if (!user) return [];
+
+    const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("clerk_user_id", user.id)
+        .single();
+
+    if (!profile) return [];
+    const profileId = profile.id;
+
+    // 1. Fetch trip IDs
+    const { data: memberships } = await supabaseAdmin
+        .from("trip_members")
+        .select("trip_id")
+        .eq("profile_id", profileId);
+
+    const tripIds = Array.from(new Set((memberships || []).map((m) => m.trip_id)));
+    if (tripIds.length === 0) return [];
+
+    const activitiesList: any[] = [];
+
+    // Fetch related Profiles for display names
+    const { data: allProfiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, name, avatar_url");
+    const profileMap = new Map<string, { name: string; avatarUrl?: string }>();
+    (allProfiles || []).forEach((p) => {
+        profileMap.set(p.id, { name: p.name, avatarUrl: p.avatar_url });
+    });
+
+    const getActorInfo = (pId: string) => {
+        const info = profileMap.get(pId);
+        return {
+            name: info?.name || "Someone",
+            avatarUrl: info?.avatarUrl,
+            fallback: (info?.name || "S").charAt(0).toUpperCase(),
+        };
+    };
+
+    // A. Trips Created
+    const { data: trips } = await supabaseAdmin
+        .from("trips")
+        .select("id, title, profile_id, created_at")
+        .in("id", tripIds)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+    (trips || []).forEach((t) => {
+        activitiesList.push({
+            id: `trip-${t.id}`,
+            actor: getActorInfo(t.profile_id),
+            action: "created a trip",
+            target: t.title,
+            category: "trip",
+            timestamp: new Date(t.created_at).getTime(),
+        });
+    });
+
+    // B. Expenses Added & OCR Receipt Scanned
+    const { data: expenses } = await supabaseAdmin
+        .from("expenses")
+        .select("id, title, amount, paid_by, receipt_url, created_at, currency")
+        .in("trip_id", tripIds)
+        .order("created_at", { ascending: false })
+        .limit(15);
+
+    (expenses || []).forEach((exp) => {
+        // Add expense activity
+        activitiesList.push({
+            id: `exp-${exp.id}`,
+            actor: getActorInfo(exp.paid_by),
+            action: `added an expense for "${exp.title}"`,
+            target: `${exp.currency || "INR"} ${exp.amount}`,
+            category: "expense",
+            timestamp: new Date(exp.created_at).getTime(),
+        });
+
+        // If scanned receipt
+        if (exp.receipt_url) {
+            activitiesList.push({
+                id: `ocr-${exp.id}`,
+                actor: getActorInfo(exp.paid_by),
+                action: `scanned a receipt for "${exp.title}"`,
+                target: exp.receipt_url.split("/").pop() || "receipt.jpg",
+                category: "ocr",
+                timestamp: new Date(exp.created_at).getTime() + 1000,
+            });
+        }
+    });
+
+    // C. Settlement Completed
+    const { data: shares } = await supabaseAdmin
+        .from("expense_shares")
+        .select(`
+            amount,
+            profile_id,
+            updated_at,
+            expenses (
+                title,
+                trip_id
+            )
+        `)
+        .eq("is_settled", true)
+        .order("updated_at", { ascending: false })
+        .limit(15);
+
+    const filteredShares = (shares || []).filter((s: any) => s.expenses && tripIds.includes(s.expenses.trip_id));
+    filteredShares.forEach((s: any, idx) => {
+        activitiesList.push({
+            id: `settle-${idx}-${s.updated_at}`,
+            actor: getActorInfo(s.profile_id),
+            action: `settled balance for "${s.expenses.title}"`,
+            target: `INR ${s.amount}`,
+            category: "member",
+            timestamp: new Date(s.updated_at).getTime(),
+        });
+    });
+
+    // D. Itinerary Generated / Saved
+    const { data: itineraries } = await supabaseAdmin
+        .from("trip_itineraries")
+        .select(`
+            updated_at,
+            trips (
+                title,
+                profile_id
+            )
+        `)
+        .in("trip_id", tripIds)
+        .order("updated_at", { ascending: false })
+        .limit(10);
+
+    (itineraries || []).forEach((iti: any, idx) => {
+        if (!iti.trips) return;
+        activitiesList.push({
+            id: `iti-${idx}-${iti.updated_at}`,
+            actor: getActorInfo(iti.trips.profile_id),
+            action: "generated itinerary for",
+            target: iti.trips.title,
+            category: "ai",
+            timestamp: new Date(iti.updated_at).getTime(),
+        });
+    });
+
+    // Sort by timestamp DESC
+    activitiesList.sort((a, b) => b.timestamp - a.timestamp);
+
+    const formatRelativeTime = (time: number) => {
+        const seconds = Math.floor((Date.now() - time) / 1000);
+        if (seconds < 0) return "just now";
+        if (seconds < 60) return "just now";
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes} min${minutes > 1 ? "s" : ""} ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+        const days = Math.floor(hours / 24);
+        return `${days} day${days > 1 ? "s" : ""} ago`;
+    };
+
+    return activitiesList.slice(0, 8).map((act) => ({
+        id: act.id,
+        actor: act.actor,
+        action: act.action,
+        target: act.target,
+        category: act.category,
+        timestamp: formatRelativeTime(act.timestamp),
+    }));
 }
 
 

@@ -12,18 +12,22 @@ import { Footer } from "@/components/layout/footer";
 
 export default function Home() {
   return (
-    <main>
+    <main className="bg-background min-h-screen selection:bg-primary/20">
       <Navbar />
-      <Hero />
-      <Problem />
-      <Features />
-      <AIPreview />
-      <Collaboration />
-      <ExpensePreview />
-      <OCRPreview />
-      <MapsPreview />
-      <DashboardPreview />
-      <Footer />
+      <div className="space-y-20 md:space-y-32">
+        <Hero />
+        <Problem />
+        <Features />
+        <AIPreview />
+        <Collaboration />
+        <ExpensePreview />
+        <OCRPreview />
+        <MapsPreview />
+        <DashboardPreview />
+      </div>
+      <div className="mt-20 md:mt-32">
+        <Footer />
+      </div>
     </main>
   );
 }

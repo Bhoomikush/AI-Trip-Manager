@@ -9,14 +9,18 @@ import { useToast } from "@/components/ui/toast";
 interface DeleteTripButtonProps {
     tripId: string;
     tripTitle: string;
+    isIconButton?: boolean;
 }
 
-export function DeleteTripButton({ tripId, tripTitle }: DeleteTripButtonProps) {
+export function DeleteTripButton({ tripId, tripTitle, isIconButton = false }: DeleteTripButtonProps) {
     const router = useRouter();
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
 
-    async function handleDelete() {
+    async function handleDelete(e: React.MouseEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        
         const confirmed = window.confirm(
             `Are you sure you want to delete "${tripTitle}"?\n\nThis action cannot be undone and will permanently remove all plans, budgets, and files associated with this trip.`
         );
@@ -29,11 +33,25 @@ export function DeleteTripButton({ tripId, tripTitle }: DeleteTripButtonProps) {
             await deleteTrip(tripId);
             router.push("/dashboard");
             router.refresh();
+            showToast(`"${tripTitle}" deleted successfully.`, "success");
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred.";
             showToast(`Failed to delete trip: ${errorMessage}`, "error");
             setLoading(false);
         }
+    }
+
+    if (isIconButton) {
+        return (
+            <button
+                onClick={handleDelete}
+                disabled={loading}
+                title="Delete Trip"
+                className="flex items-center justify-center p-2 border border-destructive/20 rounded-lg bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+                <Trash2 className="h-4 w-4" />
+            </button>
+        );
     }
 
     return (

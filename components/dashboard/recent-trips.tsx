@@ -1,5 +1,11 @@
-import { ArrowRight, Calendar, MapPin, Wallet, Plus } from "lucide-react";
+"use client";
+
+import React from "react";
+import { motion } from "framer-motion";
+import { ArrowRight, Calendar, MapPin, Wallet, Users, Edit2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { DeleteTripButton } from "./delete-trip-button";
 
 interface Trip {
     id: string;
@@ -11,10 +17,30 @@ interface Trip {
     budget?: number | null;
     currency?: string;
     status: string;
+    trip_members?: { profile_id: string }[];
+    expenses?: { amount: number }[];
 }
 
 interface RecentTripsProps {
     trips: Trip[];
+}
+
+const GRADIENTS = [
+    "from-[#6F8476] to-[#4F6456]", // Sage/Forest Green
+    "from-[#79826D] to-[#59624D]", // Muted Olive
+    "from-[#8A9A9A] to-[#6A7A7A]", // Blue Gray
+    "from-[#6F7F80] to-[#4F5F60]", // Dusty Slate
+    "from-[#5A6E5A] to-[#3A4E3A]", // Soft Forest
+    "from-[#B89A63] to-[#987A43]", // Warm Gold/Bronze
+];
+
+function getCoverGradient(id: string) {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+        hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % GRADIENTS.length;
+    return GRADIENTS[index];
 }
 
 const statusStyles: Record<string, { bg: string; text: string; label: string }> = {
@@ -35,16 +61,15 @@ const statusStyles: Record<string, { bg: string; text: string; label: string }> 
     },
 };
 
-function formatBudget(budget: number | null | undefined, currency: string | undefined) {
-    if (budget === null || budget === undefined) return "No Budget";
+function formatAmount(amount: number, currency: string | undefined) {
     try {
         return new Intl.NumberFormat("en-IN", {
             style: "currency",
             currency: currency || "INR",
             maximumFractionDigits: 0,
-        }).format(budget);
+        }).format(amount);
     } catch {
-        return `${currency || "INR"} ${budget}`;
+        return `${currency || "INR"} ${amount}`;
     }
 }
 
@@ -61,107 +86,159 @@ function formatDate(dateStr: string) {
 }
 
 export function RecentTrips({ trips }: RecentTripsProps) {
+    const router = useRouter();
     const hasTrips = trips && trips.length > 0;
 
+    const containerVariants = {
+        hidden: {},
+        visible: {
+            transition: {
+                staggerChildren: 0.05,
+            },
+        },
+    };
+
+    const cardVariants = {
+        hidden: { opacity: 0, scale: 0.98, y: 10 },
+        visible: { 
+            opacity: 1, 
+            scale: 1, 
+            y: 0,
+            transition: { type: "spring" as const, stiffness: 300, damping: 25 }
+        },
+    };
+
     return (
-        <section className="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col h-full">
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col h-full">
             {/* Section Header */}
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-8 flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-semibold text-foreground">
+                    <h2 className="text-3xl font-heading font-extrabold text-foreground tracking-tight">
                         My Trips
                     </h2>
                     <p className="text-sm text-muted-foreground">
                         Continue planning your latest adventures.
                     </p>
                 </div>
-                {hasTrips && (
-                    <Link
-                        href="/dashboard/trips/new"
-                        className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                    >
-                        Plan new trip
-                        <ArrowRight className="h-4 w-4" />
-                    </Link>
-                )}
             </div>
 
             {/* Trip List / Empty State */}
             {!hasTrips ? (
-                <div className="flex flex-col items-center justify-center text-center py-12 px-4 border border-dashed border-border rounded-lg bg-muted/20 flex-1">
-                    <div className="rounded-full bg-primary/15 p-4 mb-4">
-                        <Calendar className="h-8 w-8 text-primary" />
+                <div className="flex flex-col items-center justify-center text-center py-16 px-4 border border-dashed border-border rounded-xl bg-muted/5 flex-1">
+                    <div className="rounded-full bg-primary/10 p-4 mb-4 text-primary">
+                        <Calendar className="h-6 w-6" />
                     </div>
-                    <h3 className="font-semibold text-lg text-foreground mb-1">
+                    <h3 className="font-bold text-base text-foreground mb-1">
                         No trips planned yet
                     </h3>
-                    <p className="text-sm text-muted-foreground max-w-sm mb-6">
+                    <p className="text-xs text-muted-foreground max-w-xs mb-6">
                         Start your next group adventure by creating a new trip timeline and budget plan.
                     </p>
                     <Link
                         href="/dashboard/trips/new"
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/95"
+                        className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground hover:bg-primary/95 transition-all shadow-md hover:shadow-primary/15"
                     >
-                        <Plus className="h-4 w-4" />
-                        Create Trip
+                        Create a Trip
                     </Link>
                 </div>
             ) : (
-                <div className="space-y-4 max-h-[480px] overflow-y-auto pr-1">
+                <motion.div 
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="grid gap-6 sm:grid-cols-2 max-h-[560px] overflow-y-auto pr-1"
+                >
                     {trips.map((trip) => {
                         const statusInfo = statusStyles[trip.status] || {
                             bg: "bg-slate-500/10 text-slate-500 border-slate-500/20",
                             text: "text-slate-500",
                             label: trip.status,
                         };
+                        const totalExpense = trip.expenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+                        const membersCount = trip.trip_members?.length || 1;
+                        const gradient = getCoverGradient(trip.id);
 
                         return (
-                            <div
+                            <motion.div
                                 key={trip.id}
-                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-border p-4 transition-all hover:border-primary/30 hover:bg-muted/40"
+                                variants={cardVariants}
+                                whileHover={{ y: -4, transition: { duration: 0.15 } }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => router.push(`/dashboard/trips/${trip.id}`)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        router.push(`/dashboard/trips/${trip.id}`);
+                                    }
+                                }}
+                                role="button"
+                                tabIndex={0}
+                                className="group relative flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:shadow-md transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/45 select-none"
                             >
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <h3 className="font-semibold text-foreground text-base">
-                                            {trip.title}
-                                        </h3>
-                                        <span
-                                            className={`rounded-full px-2 py-0.5 text-xs font-semibold border ${statusInfo.bg}`}
-                                        >
-                                            {statusInfo.label}
-                                        </span>
-                                    </div>
-
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                                        <span className="flex items-center gap-1">
-                                            <MapPin className="h-3.5 w-3.5 text-primary/70" />
-                                            {trip.destination}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <Calendar className="h-3.5 w-3.5 text-primary/70" />
-                                            {formatDate(trip.start_date)} - {formatDate(trip.end_date)}
-                                        </span>
-                                    </div>
-
-                                    <div className="text-sm font-medium text-foreground flex items-center gap-1">
-                                        <Wallet className="h-3.5 w-3.5 text-primary/70" />
-                                        Budget: <span className="text-primary">{formatBudget(trip.budget, trip.currency)}</span>
-                                    </div>
+                                {/* Cover Banner */}
+                                <div className={`h-32 w-full bg-gradient-to-r ${gradient} relative flex items-end p-4 shrink-0`}>
+                                    <div className="absolute inset-0 bg-black/10" />
+                                    <span className={`absolute top-4 right-4 rounded-full px-2.5 py-0.5 text-[9px] font-bold tracking-wider uppercase border bg-white/95 text-foreground shadow-sm ${statusInfo.text}`}>
+                                        {statusInfo.label}
+                                    </span>
+                                    <h3 className="font-sans font-bold text-white text-2xl tracking-tight truncate drop-shadow-sm relative z-10">
+                                        {trip.title}
+                                    </h3>
                                 </div>
 
-                                <div className="flex items-center justify-end sm:justify-start">
-                                    <Link
-                                        href={`/dashboard/trips/${trip.id}`}
-                                        className="flex items-center gap-1 text-sm font-medium text-primary transition hover:gap-2"
-                                    >
-                                        Open
-                                        <ArrowRight className="h-4 w-4" />
-                                    </Link>
+                                {/* Content Details */}
+                                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                            <MapPin className="h-4 w-4 text-primary/70 shrink-0" />
+                                            <span className="truncate font-medium">{trip.destination}</span>
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                            <Calendar className="h-4 w-4 text-primary/70 shrink-0" />
+                                            <span className="font-medium">{formatDate(trip.start_date)} - {formatDate(trip.end_date)}</span>
+                                        </div>
+
+                                        <div className="flex items-center justify-between pt-3 border-t border-border/60 text-sm">
+                                            <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                                                <Wallet className="h-4 w-4 text-primary/70 shrink-0" />
+                                                <span>{formatAmount(totalExpense, trip.currency)}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                                                <Users className="h-3.5 w-3.5 text-primary/70 shrink-0" />
+                                                <span>{membersCount} {membersCount === 1 ? "Member" : "Members"}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Links */}
+                                    <div className="flex items-center justify-between pt-2 border-t border-border/40 gap-2 shrink-0">
+                                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                            <Link
+                                                href={`/dashboard/trips/${trip.id}`}
+                                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition text-xs font-semibold select-none"
+                                            >
+                                                Open
+                                                <ArrowRight className="h-3 w-3" />
+                                            </Link>
+                                            <Link
+                                                href={`/dashboard/trips/${trip.id}/edit`}
+                                                className="inline-flex items-center justify-center p-1.5 border border-border rounded-lg hover:border-primary/30 hover:bg-muted/40 transition text-muted-foreground hover:text-foreground select-none"
+                                                title="Edit Details"
+                                            >
+                                                <Edit2 className="h-3.5 w-3.5" />
+                                            </Link>
+                                        </div>
+                                        
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <DeleteTripButton tripId={trip.id} tripTitle={trip.title} isIconButton={true} />
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         );
                     })}
-                </div>
+                </motion.div>
             )}
         </section>
     );
