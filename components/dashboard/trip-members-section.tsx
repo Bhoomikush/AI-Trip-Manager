@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { addMember, removeMember } from "@/lib/trips";
 import { Users, UserPlus, X, Shield, User } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 interface Profile {
     id: string;
@@ -26,6 +27,7 @@ interface TripMembersSectionProps {
 }
 
 export function TripMembersSection({ tripId, isOwner, initialMembers }: TripMembersSectionProps) {
+    const { showToast } = useToast();
     const [members, setMembers] = useState<Member[]>(initialMembers);
     const [inviteEmail, setInviteEmail] = useState("");
     const [isInviting, setIsInviting] = useState(false);
@@ -62,7 +64,7 @@ export function TripMembersSection({ tripId, isOwner, initialMembers }: TripMemb
             await removeMember(tripId, memberId);
             window.location.reload();
         } catch (err) {
-            alert(err instanceof Error ? err.message : "Failed to remove member.");
+            showToast(err instanceof Error ? err.message : "Failed to remove member.", "error");
             setLoading(false);
         }
     }

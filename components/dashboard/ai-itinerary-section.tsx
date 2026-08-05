@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Sparkles, Loader2, Calendar, Clock, Check, Edit2, Trash2, Plus, ArrowUp, ArrowDown, GripVertical, X, Save } from "lucide-react";
 import { TripItinerary, TripActivity } from "@/types/ai";
 import { getSavedItineraryAction, saveItineraryAction, deleteItineraryAction, verifyItineraryOwnerAction } from "@/lib/itinerary-actions";
+import { useToast } from "@/components/ui/toast";
+import { motion } from "framer-motion";
 
 interface AIItinerarySectionProps {
     trip: {
@@ -31,6 +33,7 @@ const BUDGET_OPTIONS: Array<"Low" | "Medium" | "High"> = ["Low", "Medium", "High
 const TRAVEL_STYLE_OPTIONS: Array<"Relaxed" | "Balanced" | "Packed"> = ["Relaxed", "Balanced", "Packed"];
 
 export function AIItinerarySection({ trip }: AIItinerarySectionProps) {
+    const { showToast } = useToast();
     const [budget, setBudget] = useState<"Low" | "Medium" | "High">("Medium");
     const [travelStyle, setTravelStyle] = useState<"Relaxed" | "Balanced" | "Packed">("Balanced");
     const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -273,15 +276,15 @@ export function AIItinerarySection({ trip }: AIItinerarySectionProps) {
 
         const { time, title, estimatedCost } = editingActivity.data;
         if (!time || !time.trim()) {
-            alert("Time is required.");
+            showToast("Time is required.", "error");
             return;
         }
         if (!title || !title.trim()) {
-            alert("Title is required.");
+            showToast("Title is required.", "error");
             return;
         }
         if (estimatedCost < 0) {
-            alert("Estimated cost cannot be negative.");
+            showToast("Estimated cost cannot be negative.", "error");
             return;
         }
 
@@ -320,15 +323,15 @@ export function AIItinerarySection({ trip }: AIItinerarySectionProps) {
 
         const { time, title, estimatedCost } = newActivity;
         if (!time || !time.trim()) {
-            alert("Time is required.");
+            showToast("Time is required.", "error");
             return;
         }
         if (!title || !title.trim()) {
-            alert("Title is required.");
+            showToast("Title is required.", "error");
             return;
         }
         if (estimatedCost < 0) {
-            alert("Estimated cost cannot be negative.");
+            showToast("Estimated cost cannot be negative.", "error");
             return;
         }
 
@@ -563,7 +566,12 @@ export function AIItinerarySection({ trip }: AIItinerarySectionProps) {
 
                 {/* Itinerary Result Display */}
                 {itinerary && (
-                    <div className="space-y-6 pt-4 border-t border-border animate-fade-in">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="space-y-6 pt-4 border-t border-border"
+                    >
                         {/* Summary Block */}
                         <div className="bg-muted/30 p-5 rounded-xl border border-border space-y-2">
                             <h3 className="text-lg font-bold text-foreground">{itinerary.tripTitle}</h3>
@@ -576,8 +584,11 @@ export function AIItinerarySection({ trip }: AIItinerarySectionProps) {
                                 const isRegenerating = !!regeneratingDays[day.day];
 
                                 return (
-                                    <div 
+                                    <motion.div 
                                         key={day.day} 
+                                        initial={{ opacity: 0, scale: 0.98 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ duration: 0.3, delay: dayIndex * 0.05 }}
                                         className={`space-y-4 border border-border/60 p-5 rounded-xl bg-background/50 relative transition ${
                                             isRegenerating ? "opacity-60 pointer-events-none" : ""
                                         }`}
@@ -635,12 +646,16 @@ export function AIItinerarySection({ trip }: AIItinerarySectionProps) {
                                                 const isEditing = editingActivity?.dayIndex === dayIndex && editingActivity?.activityIndex === activityIndex;
 
                                                 return (
-                                                    <div
+                                                    <motion.div
                                                         key={activityIndex}
+                                                        layout
+                                                        initial={{ opacity: 0, x: -10 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ duration: 0.2 }}
                                                         draggable={!isEditing && isOwner && !saving}
-                                                        onDragStart={(e) => handleDragStart(e, dayIndex, activityIndex)}
-                                                        onDragOver={handleDragOver}
-                                                        onDrop={(e) => handleDrop(e, dayIndex, activityIndex)}
+                                                        onDragStart={(e: any) => handleDragStart(e, dayIndex, activityIndex)}
+                                                        onDragOver={(e: any) => handleDragOver(e)}
+                                                        onDrop={(e: any) => handleDrop(e, dayIndex, activityIndex)}
                                                         className={`relative flex gap-3 p-3 rounded-lg border border-border bg-card/60 transition ${
                                                             isEditing ? "ring-2 ring-primary/20 border-primary" : "hover:shadow-sm"
                                                         }`}
@@ -845,7 +860,7 @@ export function AIItinerarySection({ trip }: AIItinerarySectionProps) {
                                                                 </div>
                                                             </div>
                                                         )}
-                                                    </div>
+                                                    </motion.div>
                                                 );
                                             })}
 
@@ -938,7 +953,7 @@ export function AIItinerarySection({ trip }: AIItinerarySectionProps) {
                                                 </button>
                                             ))}
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 );
                             })}
                         </div>
@@ -993,7 +1008,7 @@ export function AIItinerarySection({ trip }: AIItinerarySectionProps) {
                                 </div>
                             </div>
                         )}
-                    </div>
+                    </motion.div>
                 )}
             </div>
         </div>

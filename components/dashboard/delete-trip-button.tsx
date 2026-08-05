@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteTrip } from "@/lib/trips";
 import { Trash2 } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 interface DeleteTripButtonProps {
     tripId: string;
@@ -12,6 +13,7 @@ interface DeleteTripButtonProps {
 
 export function DeleteTripButton({ tripId, tripTitle }: DeleteTripButtonProps) {
     const router = useRouter();
+    const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
 
     async function handleDelete() {
@@ -29,7 +31,7 @@ export function DeleteTripButton({ tripId, tripTitle }: DeleteTripButtonProps) {
             router.refresh();
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred.";
-            alert(`Failed to delete trip: ${errorMessage}`);
+            showToast(`Failed to delete trip: ${errorMessage}`, "error");
             setLoading(false);
         }
     }

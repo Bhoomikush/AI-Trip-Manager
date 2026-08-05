@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createExpense } from "@/lib/expenses";
 import { uploadReceiptAction, deleteReceiptAction } from "@/lib/storage-actions";
 import { Upload, X, Loader2, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface CreateExpenseFormProps {
     tripId: string;
@@ -525,7 +526,12 @@ export function CreateExpenseForm({ tripId }: CreateExpenseFormProps) {
                 <label className="text-sm font-medium text-foreground">Receipt Image (Optional)</label>
                 
                 {receiptUrl ? (
-                    <div className="relative flex items-center gap-4 p-4 border border-border rounded-lg bg-muted/40">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        className="relative flex items-center gap-4 p-4 border border-border rounded-lg bg-muted/40"
+                    >
                         <div className="relative h-20 w-20 rounded-md overflow-hidden border border-border bg-background flex items-center justify-center">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img 
@@ -535,8 +541,17 @@ export function CreateExpenseForm({ tripId }: CreateExpenseFormProps) {
                             />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">
-                                {analyzing ? "Analyzing receipt..." : "Receipt uploaded successfully"}
+                            <p className="text-sm font-medium text-foreground truncate flex items-center gap-1.5">
+                                {!analyzing && (
+                                    <motion.span 
+                                        initial={{ scale: 0 }} 
+                                        animate={{ scale: 1 }} 
+                                        className="text-emerald-500 font-bold"
+                                    >
+                                        ✓
+                                    </motion.span>
+                                )}
+                                {analyzing ? "Analyzing receipt..." : "Receipt analyzed successfully!"}
                             </p>
                             <p className="text-xs text-muted-foreground truncate">
                                 {analyzing ? "Gemini is extracting details" : "Stored securely in Supabase"}
@@ -551,7 +566,7 @@ export function CreateExpenseForm({ tripId }: CreateExpenseFormProps) {
                         >
                             <X className="h-5 w-5" />
                         </button>
-                    </div>
+                    </motion.div>
                 ) : (
                     <div
                         onDragEnter={handleDrag}

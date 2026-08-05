@@ -11,6 +11,7 @@ import { ExpenseSummaryDashboard } from "@/components/dashboard/expense-summary-
 import { TripBalancesSection } from "@/components/dashboard/trip-balances-section";
 import { SettlementPlanSection } from "@/components/dashboard/settlement-plan-section";
 import { AIItinerarySection } from "@/components/dashboard/ai-itinerary-section";
+import { TripMap } from "@/components/dashboard/trip-map";
 import {
     ArrowLeft,
     Calendar,
@@ -189,6 +190,15 @@ export default async function TripDetailPage({ params }: PageProps) {
                         <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
                             {trip.description || "No description provided for this trip yet."}
                         </p>
+                    </div>
+
+                    {/* Interactive Map */}
+                    <div className="bg-card border border-border p-6 rounded-xl shadow-sm space-y-4">
+                        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                            <MapPin className="h-5 w-5 text-primary/70" />
+                            Interactive Map
+                        </h2>
+                        <TripMap destination={trip.destination} tripTitle={trip.title} tripId={trip.id} />
                     </div>
 
                     {/* AI Itinerary Planner section */}

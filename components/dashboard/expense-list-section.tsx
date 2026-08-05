@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Wallet, Plus, Calendar, User, Trash2 } from "lucide-react";
 import { deleteExpense } from "@/lib/trips";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface Profile {
     id: string;
@@ -209,44 +210,57 @@ export function ExpenseListSection({ tripId, expenses, totalMembers }: ExpenseLi
             </div>
 
             {/* Custom Modal Confirmation Dialog Overlay */}
-            {expenseIdToDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity">
-                    <div className="bg-card border border-border p-6 rounded-xl shadow-lg max-w-sm w-full mx-4 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-                        <div className="space-y-2">
-                            <h3 className="text-lg font-bold text-foreground">Delete Expense?</h3>
-                            <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
-                        </div>
-
-                        {error && (
-                            <div className="p-3 bg-destructive/15 text-destructive border border-destructive/20 rounded-lg text-xs">
-                                {error}
+            <AnimatePresence>
+                {expenseIdToDelete && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                    >
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                            className="bg-card border border-border p-6 rounded-xl shadow-lg max-w-sm w-full mx-4 space-y-4"
+                        >
+                            <div className="space-y-2">
+                                <h3 className="text-lg font-bold text-foreground">Delete Expense?</h3>
+                                <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
                             </div>
-                        )}
 
-                        <div className="flex gap-3 justify-end pt-2">
-                            <button
-                                type="button"
-                                disabled={isDeleting}
-                                onClick={() => {
-                                    setExpenseIdToDelete(null);
-                                    setError(null);
-                                }}
-                                className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition disabled:opacity-50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                disabled={isDeleting}
-                                onClick={handleConfirmDelete}
-                                className="px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg text-sm font-medium transition disabled:opacity-50"
-                            >
-                                {isDeleting ? "Deleting..." : "Delete"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                            {error && (
+                                <div className="p-3 bg-destructive/15 text-destructive border border-destructive/20 rounded-lg text-xs">
+                                    {error}
+                                </div>
+                            )}
+
+                            <div className="flex gap-3 justify-end pt-2">
+                                <button
+                                    type="button"
+                                    disabled={isDeleting}
+                                    onClick={() => {
+                                        setExpenseIdToDelete(null);
+                                        setError(null);
+                                    }}
+                                    className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={isDeleting}
+                                    onClick={handleConfirmDelete}
+                                    className="px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                                >
+                                    {isDeleting ? "Deleting..." : "Delete"}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ArrowRight, User, CheckCircle2 } from "lucide-react";
 import { SettlementTransaction, settleUpTransaction } from "@/lib/trips";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface SettlementPlanSectionProps {
     tripId: string;
@@ -150,46 +151,59 @@ export function SettlementPlanSection({ tripId, plan, currency }: SettlementPlan
             )}
 
             {/* Confirmation Dialog Overlay */}
-            {confirmTx && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-150">
-                    <div className="bg-card border border-border p-6 rounded-xl shadow-lg max-w-sm w-full mx-4 space-y-4 animate-in zoom-in-95 duration-150">
-                        <div className="space-y-2">
-                            <h3 className="text-lg font-bold text-foreground">Settle Up Payment?</h3>
-                            <p className="text-sm text-muted-foreground">
-                                Are you sure you want to mark this payment of <span className="font-semibold text-foreground">{formatAmount(confirmTx.amount, currency)}</span> from <span className="font-semibold text-foreground">{confirmTx.from.name}</span> to <span className="font-semibold text-foreground">{confirmTx.to.name}</span> as settled?
-                            </p>
-                        </div>
-
-                        {error && (
-                            <div className="p-3 bg-destructive/15 text-destructive border border-destructive/20 rounded-lg text-xs">
-                                {error}
+            <AnimatePresence>
+                {confirmTx && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                    >
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                            className="bg-card border border-border p-6 rounded-xl shadow-lg max-w-sm w-full mx-4 space-y-4"
+                        >
+                            <div className="space-y-2">
+                                <h3 className="text-lg font-bold text-foreground">Settle Up Payment?</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Are you sure you want to mark this payment of <span className="font-semibold text-foreground">{formatAmount(confirmTx.amount, currency)}</span> from <span className="font-semibold text-foreground">{confirmTx.from.name}</span> to <span className="font-semibold text-foreground">{confirmTx.to.name}</span> as settled?
+                                </p>
                             </div>
-                        )}
 
-                        <div className="flex gap-3 justify-end pt-2">
-                            <button
-                                type="button"
-                                disabled={isSettling}
-                                onClick={() => {
-                                    setConfirmTx(null);
-                                    setError(null);
-                                }}
-                                className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition disabled:opacity-50 cursor-pointer"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                disabled={isSettling}
-                                onClick={handleConfirmSettle}
-                                className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg text-sm font-medium transition disabled:opacity-50 cursor-pointer"
-                            >
-                                {isSettling ? "Settling..." : "Confirm"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                            {error && (
+                                <div className="p-3 bg-destructive/15 text-destructive border border-destructive/20 rounded-lg text-xs">
+                                    {error}
+                                </div>
+                            )}
+
+                            <div className="flex gap-3 justify-end pt-2">
+                                <button
+                                    type="button"
+                                    disabled={isSettling}
+                                    onClick={() => {
+                                        setConfirmTx(null);
+                                        setError(null);
+                                    }}
+                                    className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition disabled:opacity-50 cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={isSettling}
+                                    onClick={handleConfirmSettle}
+                                    className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg text-sm font-medium transition disabled:opacity-50 cursor-pointer"
+                                >
+                                    {isSettling ? "Settling..." : "Confirm"}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
