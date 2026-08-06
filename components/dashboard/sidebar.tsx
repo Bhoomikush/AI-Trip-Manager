@@ -19,27 +19,27 @@ const MENU_ITEMS = [
     },
     {
         name: "My Trips",
-        href: "/dashboard", // link back to dashboard trip list
+        href: "/dashboard/trips",
         icon: Route,
     },
     {
         name: "Expenses",
-        href: "/dashboard", // link back to dashboard stats
+        href: "/dashboard/expenses",
         icon: Wallet,
     },
     {
         name: "Receipts",
-        href: "/dashboard",
+        href: "/dashboard/receipts",
         icon: Receipt,
     },
     {
         name: "Maps",
-        href: "/dashboard",
+        href: "/dashboard/maps",
         icon: Map,
     },
     {
         name: "Settings",
-        href: "/dashboard",
+        href: "/dashboard/settings",
         icon: Settings,
     },
 ];
