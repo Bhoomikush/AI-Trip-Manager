@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Wallet, Plus, Calendar, User, Trash2 } from "lucide-react";
 import { deleteExpense } from "@/lib/trips";
@@ -80,40 +80,60 @@ function formatAddedDate(dateStr: string) {
 }
 
 export function ExpenseListSection({ tripId, expenses, totalMembers }: ExpenseListSectionProps) {
+    const [localExpenses, setLocalExpenses] = useState<Expense[]>(expenses);
     const [expenseIdToDelete, setExpenseIdToDelete] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    useEffect(() => {
+        setLocalExpenses(expenses);
+    }, [expenses]);
+
     async function handleConfirmDelete() {
-        if (!expenseIdToDelete) return;
+        const idToDelete = expenseIdToDelete;
+        if (!idToDelete) return;
         setIsDeleting(true);
         setError(null);
+
+        // Optimistic UI Update
+        const backup = [...localExpenses];
+        setLocalExpenses(prev => prev.filter(e => e.id !== idToDelete));
+        setExpenseIdToDelete(null);
+
         try {
-            await deleteExpense(expenseIdToDelete);
-            setExpenseIdToDelete(null);
-            window.location.reload();
+            await deleteExpense(idToDelete);
         } catch (err) {
+            // Rollback optimistic update
+            setLocalExpenses(backup);
             setError(err instanceof Error ? err.message : "Failed to delete expense.");
+        } finally {
             setIsDeleting(false);
         }
     }
 
-    if (expenses.length === 0) {
+    if (localExpenses.length === 0) {
         return (
-            <div className="bg-card border border-border p-6 rounded-xl shadow-sm space-y-6 text-center py-12">
-                <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <Wallet className="h-6 w-6" />
+            <div className="bg-card border border-border p-6 rounded-xl shadow-sm space-y-6 text-center py-16 relative overflow-hidden">
+                {/* Decorative Background Elements */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="relative mx-auto h-16 w-16 mb-4">
+                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-md" />
+                    <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center text-primary shadow-sm mx-auto">
+                        <Wallet className="h-8 w-8" />
+                    </div>
                 </div>
                 <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-foreground">No expenses added yet</h3>
-                    <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    <h3 className="text-xl font-bold tracking-tight text-foreground">No expenses added yet</h3>
+                    <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
                         Keep track of your group budget, lodging, dining, and other trip expenses here.
                     </p>
                 </div>
-                <div>
+                <div className="pt-2">
                     <Link
                         href={`/dashboard/trips/${tripId}/expenses/new`}
-                        className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/95"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5"
                     >
                         <Plus className="h-4 w-4" />
                         Add First Expense
@@ -140,7 +160,7 @@ export function ExpenseListSection({ tripId, expenses, totalMembers }: ExpenseLi
             </div>
 
             <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
-                {expenses.map((expense) => {
+                {localExpenses.map((expense) => {
                     const catStyle = categoryStyles[expense.category] || categoryStyles.Other;
                     const paidByName = expense.paid_by_profile?.name || "Unknown Member";
 

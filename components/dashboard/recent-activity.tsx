@@ -10,7 +10,8 @@ import {
   ScanLine, 
   MapPin, 
   Coins,
-  LucideIcon 
+  LucideIcon,
+  Activity as ActivityIcon
 } from "lucide-react";
 
 export type ActivityCategory = 
@@ -83,13 +84,20 @@ export function RecentActivity({ activities = [] }: RecentActivityProps) {
           <h2 className="text-xl font-bold text-foreground tracking-tight">Recent Activity</h2>
           <p className="text-xs text-muted-foreground">Keep track of your group's latest travel updates.</p>
         </div>
-        <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-border rounded-xl bg-muted/5 flex-1">
-          <div className="rounded-full bg-muted p-4 text-muted-foreground/60">
-            <Users className="h-6 w-6" />
+        <div className="flex flex-col items-center justify-center py-20 px-6 text-center border border-dashed border-border rounded-xl bg-gradient-to-b from-muted/5 to-muted/20 flex-1 relative overflow-hidden">
+          {/* Decorative Background Elements */}
+          <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-1/4 left-1/4 w-32 h-32 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="relative mb-5">
+            <div className="absolute inset-0 bg-primary/20 rounded-full blur-md" />
+            <div className="relative rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 p-4 border border-primary/20 text-primary shadow-sm">
+              <ActivityIcon className="h-8 w-8" />
+            </div>
           </div>
-          <h3 className="mt-4 font-bold text-sm text-foreground">No recent activity</h3>
-          <p className="mt-1 text-xs text-muted-foreground max-w-[200px]">
-            Activity details will appear as you and your friends configure plans.
+          <h3 className="font-extrabold text-xl text-foreground mb-2 tracking-tight">No recent activity</h3>
+          <p className="text-sm text-muted-foreground max-w-[250px] leading-relaxed">
+            Activity details will appear here as you and your friends plan your trip and add expenses.
           </p>
         </div>
       </section>

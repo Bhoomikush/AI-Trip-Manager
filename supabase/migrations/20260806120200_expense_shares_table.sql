@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS expense_shares (
 ALTER TABLE expense_shares ENABLE ROW LEVEL SECURITY;
 
 -- Select policy
+DROP POLICY IF EXISTS "Allow members to view expense shares" ON expense_shares;
 CREATE POLICY "Allow members to view expense shares" ON expense_shares
     FOR SELECT
     USING (

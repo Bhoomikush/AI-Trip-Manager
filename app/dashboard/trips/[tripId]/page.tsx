@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getTripById, getTripMembers, getExpenseSummary, getExpenseCategorySummary, getTripBalances, getSettlementPlan } from "@/lib/trips";
+import { getTripById, getTripMembers, getTripInvitations, getExpenseSummary, getExpenseCategorySummary, getTripBalances, getSettlementPlan } from "@/lib/trips";
 import { getTripExpenses } from "@/lib/expenses";
 import { DeleteTripButton } from "@/components/dashboard/delete-trip-button";
 import { currentUser } from "@clerk/nextjs/server";
@@ -12,6 +12,7 @@ import { TripBalancesSection } from "@/components/dashboard/trip-balances-sectio
 import { SettlementPlanSection } from "@/components/dashboard/settlement-plan-section";
 import { AIItinerarySection } from "@/components/dashboard/ai-itinerary-section";
 import { TripMap } from "@/components/dashboard/trip-map";
+import { RealtimeSync } from "@/components/dashboard/realtime-sync";
 import {
     ArrowLeft,
     Calendar,
@@ -94,6 +95,7 @@ export default async function TripDetailPage({ params }: PageProps) {
 
     const isOwner = trip.profile_id === profile.id;
     const members = await getTripMembers(trip.id);
+    const invitations = await getTripInvitations(trip.id);
     const expenses = await getTripExpenses(trip.id);
     const summary = await getExpenseSummary(trip.id, members.length);
     const categorySummary = await getExpenseCategorySummary(trip.id);
@@ -131,6 +133,7 @@ export default async function TripDetailPage({ params }: PageProps) {
                         >
                             {statusInfo.label}
                         </span>
+                        <RealtimeSync tripId={trip.id} />
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -299,7 +302,7 @@ export default async function TripDetailPage({ params }: PageProps) {
 
                     {/* Members Section */}
                     <div id="trip-members">
-                        <TripMembersSection tripId={trip.id} isOwner={isOwner} initialMembers={members} />
+                        <TripMembersSection tripId={trip.id} isOwner={isOwner} initialMembers={members} initialInvitations={invitations} />
                     </div>
 
                     {/* Expenses Section */}

@@ -25,6 +25,7 @@ ALTER TABLE trip_itineraries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trip_itinerary_days ENABLE ROW LEVEL SECURITY;
 
 -- Select policy for trip_itineraries
+DROP POLICY IF EXISTS "Allow members to view itineraries" ON trip_itineraries;
 CREATE POLICY "Allow members to view itineraries" ON trip_itineraries
     FOR SELECT
     USING (
@@ -37,6 +38,7 @@ CREATE POLICY "Allow members to view itineraries" ON trip_itineraries
     );
 
 -- Manage policy (ALL) for trip_itineraries (only trip owner)
+DROP POLICY IF EXISTS "Allow owners to manage itineraries" ON trip_itineraries;
 CREATE POLICY "Allow owners to manage itineraries" ON trip_itineraries
     FOR ALL
     USING (
@@ -49,6 +51,7 @@ CREATE POLICY "Allow owners to manage itineraries" ON trip_itineraries
     );
 
 -- Select policy for trip_itinerary_days
+DROP POLICY IF EXISTS "Allow members to view itinerary days" ON trip_itinerary_days;
 CREATE POLICY "Allow members to view itinerary days" ON trip_itinerary_days
     FOR SELECT
     USING (
@@ -62,6 +65,7 @@ CREATE POLICY "Allow members to view itinerary days" ON trip_itinerary_days
     );
 
 -- Manage policy (ALL) for trip_itinerary_days (only trip owner)
+DROP POLICY IF EXISTS "Allow owners to manage itinerary days" ON trip_itinerary_days;
 CREATE POLICY "Allow owners to manage itinerary days" ON trip_itinerary_days
     FOR ALL
     USING (

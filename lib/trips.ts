@@ -415,6 +415,189 @@ export async function removeMember(tripId: string, memberId: string) {
     revalidatePath(`/dashboard/trips/${tripId}`);
 }
 
+export async function inviteMember(tripId: string, email: string, role: 'editor' | 'viewer') {
+    const user = await currentUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data: currentProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("clerk_user_id", user.id)
+        .single();
+
+    if (!currentProfile) throw new Error("User profile not found");
+
+    const { data: trip } = await supabaseAdmin
+        .from("trips")
+        .select("profile_id")
+        .eq("id", tripId)
+        .single();
+
+    if (!trip) throw new Error("Trip not found");
+
+    if (trip.profile_id !== currentProfile.id) {
+        throw new Error("Only the trip owner can invite members.");
+    }
+
+    const cleanedEmail = email.trim().toLowerCase();
+
+    // Check if user is already a member
+    const { data: targetProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("email", cleanedEmail)
+        .single();
+
+    if (targetProfile) {
+        if (targetProfile.id === trip.profile_id) {
+            throw new Error("User is already the owner of this trip.");
+        }
+
+        const { data: existingMember } = await supabaseAdmin
+            .from("trip_members")
+            .select("id")
+            .eq("trip_id", tripId)
+            .eq("profile_id", targetProfile.id)
+            .single();
+
+        if (existingMember) {
+            throw new Error("This user is already a member of the trip.");
+        }
+    }
+
+    // Check if there is already a pending invitation for this email
+    const { data: invitations } = await supabaseAdmin
+        .from("trip_invitations")
+        .select("id, email")
+        .eq("trip_id", tripId)
+        .eq("email", cleanedEmail)
+        .eq("status", "pending");
+
+    if (invitations && invitations.length > 0) {
+        throw new Error("An invitation has already been sent to this email.");
+    }
+
+    // Insert invitation with role in the dedicated role column
+    const { error: insertError } = await supabaseAdmin
+        .from("trip_invitations")
+        .insert({
+            trip_id: tripId,
+            email: cleanedEmail,
+            role: role,
+            invited_by: user.id,
+            status: "pending",
+            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        });
+
+    if (insertError) {
+        throw new Error(`Failed to create invitation: ${insertError.message}`);
+    }
+
+    revalidatePath(`/dashboard/trips/${tripId}`);
+}
+
+export async function cancelInvitation(tripId: string, invitationId: string) {
+    const user = await currentUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data: currentProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("clerk_user_id", user.id)
+        .single();
+
+    if (!currentProfile) throw new Error("User profile not found");
+
+    const { data: trip } = await supabaseAdmin
+        .from("trips")
+        .select("profile_id")
+        .eq("id", tripId)
+        .single();
+
+    if (!trip) throw new Error("Trip not found");
+
+    if (trip.profile_id !== currentProfile.id) {
+        throw new Error("Only the trip owner can cancel invitations.");
+    }
+
+    const { error: deleteError } = await supabaseAdmin
+        .from("trip_invitations")
+        .delete()
+        .eq("id", invitationId)
+        .eq("trip_id", tripId);
+
+    if (deleteError) {
+        throw new Error(`Failed to cancel invitation: ${deleteError.message}`);
+    }
+
+    revalidatePath(`/dashboard/trips/${tripId}`);
+}
+
+export async function updateMemberRole(tripId: string, memberId: string, role: 'owner' | 'editor' | 'viewer') {
+    const user = await currentUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data: currentProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("clerk_user_id", user.id)
+        .single();
+
+    if (!currentProfile) throw new Error("User profile not found");
+
+    const { data: trip } = await supabaseAdmin
+        .from("trips")
+        .select("profile_id")
+        .eq("id", tripId)
+        .single();
+
+    if (!trip) throw new Error("Trip not found");
+
+    if (trip.profile_id !== currentProfile.id) {
+        throw new Error("Only the trip owner can update member roles.");
+    }
+
+    if (memberId.startsWith("owner-")) {
+        throw new Error("Cannot modify the owner's role.");
+    }
+
+    const { error: updateError } = await supabaseAdmin
+        .from("trip_members")
+        .update({ role })
+        .eq("id", memberId)
+        .eq("trip_id", tripId);
+
+    if (updateError) {
+        throw new Error(`Failed to update role: ${updateError.message}`);
+    }
+
+    revalidatePath(`/dashboard/trips/${tripId}`);
+}
+
+export async function getTripInvitations(tripId: string) {
+    const user = await currentUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data: invitations, error } = await supabaseAdmin
+        .from("trip_invitations")
+        .select("*")
+        .eq("trip_id", tripId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error("Failed to fetch invitations:", error);
+        return [];
+    }
+
+    return (invitations || []).map(inv => ({
+        ...inv,
+        email: inv.email,
+        role: inv.role || "viewer"
+    }));
+}
+
+
 export interface UpdateExpenseInput {
     id: string;
     title: string;

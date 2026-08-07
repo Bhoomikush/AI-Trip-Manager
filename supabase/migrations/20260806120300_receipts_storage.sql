@@ -11,6 +11,7 @@ ADD COLUMN IF NOT EXISTS receipt_url TEXT;
 
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('receipts', 'receipts', true)
+-- We use insert and conflict check
 ON CONFLICT (id) DO NOTHING;
 
 -- ===========================================
@@ -18,6 +19,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ===========================================
 
 -- Allow trip members to upload receipts
+DROP POLICY IF EXISTS "Allow trip members to upload receipts" ON storage.objects;
 CREATE POLICY "Allow trip members to upload receipts"
 ON storage.objects
 FOR INSERT
@@ -46,6 +48,7 @@ WITH CHECK (
 );
 
 -- Allow trip members to view receipts
+DROP POLICY IF EXISTS "Allow trip members to view receipts" ON storage.objects;
 CREATE POLICY "Allow trip members to view receipts"
 ON storage.objects
 FOR SELECT
@@ -74,6 +77,7 @@ USING (
 );
 
 -- Allow trip members to delete receipts
+DROP POLICY IF EXISTS "Allow trip members to delete receipts" ON storage.objects;
 CREATE POLICY "Allow trip members to delete receipts"
 ON storage.objects
 FOR DELETE

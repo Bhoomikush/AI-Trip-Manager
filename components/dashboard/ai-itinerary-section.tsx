@@ -564,6 +564,26 @@ export function AIItinerarySection({ trip }: AIItinerarySectionProps) {
                     </div>
                 )}
 
+                {/* Empty State */}
+                {!itinerary && !loading && !error && (
+                    <div className="flex flex-col items-center justify-center py-16 px-6 text-center border border-dashed border-border rounded-xl bg-gradient-to-b from-muted/5 to-muted/20 relative overflow-hidden mt-6">
+                        {/* Decorative Background Elements */}
+                        <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+                        <div className="absolute bottom-1/4 left-1/4 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+                        
+                        <div className="relative mx-auto h-16 w-16 mb-4">
+                            <div className="absolute inset-0 bg-primary/20 rounded-full blur-md" />
+                            <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center text-primary shadow-sm mx-auto">
+                                <Sparkles className="h-8 w-8" />
+                            </div>
+                        </div>
+                        <h3 className="font-extrabold text-xl text-foreground mb-2 tracking-tight">No itinerary generated yet</h3>
+                        <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                            Select your preferences above and let our AI plan the perfect day-by-day trip tailored just for you.
+                        </p>
+                    </div>
+                )}
+
                 {/* Itinerary Result Display */}
                 {itinerary && (
                     <motion.div 

@@ -6,6 +6,7 @@ import { RecentActivity } from "@/components/dashboard/recent-activity";
 import { WelcomeHero } from "@/components/dashboard/welcome-hero";
 import { syncUser } from "@/lib/sync-user";
 import { getTrips, getDashboardStats, getDashboardActivities } from "@/lib/trips";
+import { PendingInvitations } from "@/components/dashboard/pending-invitations";
 
 export default async function DashboardPage() {
     const profile = await syncUser();
@@ -15,10 +16,13 @@ export default async function DashboardPage() {
 
     return (
         <div className="space-y-8">
-            <WelcomeHero 
-                userName={profile?.name || "Traveler"} 
-                latestTrip={trips.length > 0 ? trips[0] : null} 
+
+            <WelcomeHero
+                userName={profile?.name || "Traveler"}
+                latestTrip={trips.length > 0 ? trips[0] : null}
             />
+
+            <PendingInvitations />
 
             <OverviewCards stats={stats || undefined} />
 
@@ -30,6 +34,7 @@ export default async function DashboardPage() {
             </div>
 
             <QuickActions trips={trips} />
+
         </div>
     );
-}
+}

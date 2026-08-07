@@ -18,6 +18,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: process.env.NODE_ENV === "production"
+    ? new URL("https://tripzy.vercel.app")
+    : new URL("http://localhost:3000"),
   title: {
     default: "Tripzy — Plan Group Trips Together, Powered by AI",
     template: "%s | Tripzy",
@@ -44,6 +47,7 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
   },
 };
+
 
 export const viewport: Viewport = {
   themeColor: "#ffffff",

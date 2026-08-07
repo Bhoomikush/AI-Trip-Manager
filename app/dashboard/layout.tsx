@@ -1,12 +1,15 @@
 import type { ReactNode } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { TopNavbar } from "@/components/dashboard/top-navbar";
+import { auth } from "@clerk/nextjs/server";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
     children,
 }: {
     children: ReactNode;
 }) {
+    await auth.protect();
+
     return (
         <div className="flex min-h-screen bg-background">
             {/* Sidebar */}
@@ -22,4 +25,4 @@ export default function DashboardLayout({
             </div>
         </div>
     );
-}
+}
