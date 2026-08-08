@@ -1501,7 +1501,46 @@ export async function getDashboardActivities() {
     }));
 }
 
+export interface PendingTripInvitation {
+    id: string;
+    trip_id: string;
+    email: string;
+    invited_by: string;
+    status: string;
+    role: string;
+    expires_at: string;
+    created_at: string;
+    trip?: {
+        title: string;
+    } | null;
+}
 
+export async function getPendingInvitations(): Promise<PendingTripInvitation[]> {
+    const user = await currentUser();
+    if (!user) return [];
 
+    const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("email")
+        .eq("clerk_user_id", user.id)
+        .single();
 
+    if (!profile || !profile.email) return [];
 
+    const { data: invitations, error } = await supabaseAdmin
+        .from("trip_invitations")
+        .select(`
+            *,
+            trip:trips (title)
+        `)
+        .eq("email", profile.email)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error("Failed to fetch pending invitations:", error);
+        return [];
+    }
+
+    return (invitations as any[]) || [];
+}

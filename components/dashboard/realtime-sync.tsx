@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { RefreshCw, AlertCircle } from "lucide-react";
 
 interface RealtimeSyncProps {
-    tripId: string;
+    tripId?: string;
 }
 
 export function RealtimeSync({ tripId }: RealtimeSyncProps) {
@@ -16,11 +16,11 @@ export function RealtimeSync({ tripId }: RealtimeSyncProps) {
     const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
 
     useEffect(() => {
-        if (!tripId) return;
-
         let active = true;
         let channel: any = null;
         let isClosedNormally = false;
+
+        const channelName = tripId ? `trip-sync-${tripId}` : 'dashboard-sync';
 
         async function initSync() {
             try {
@@ -33,148 +33,170 @@ export function RealtimeSync({ tripId }: RealtimeSyncProps) {
                     supabase.realtime.setAuth(token);
                 } else {
                     console.warn(`[Realtime]
-Channel: trip-sync-${tripId}
+Channel: ${channelName}
 Status: WARNING
 Message: No Supabase token retrieved from Clerk. Row-Level Security policies may reject subscription.`);
                 }
 
-                channel = supabase.channel(`trip-sync-${tripId}`)
-                    // 1. trip_members
-                    .on(
-                        "postgres_changes",
-                        {
-                            event: "*",
-                            schema: "public",
-                            table: "trip_members",
-                            filter: `trip_id=eq.${tripId}`
-                        },
-                        (payload) => {
-                            console.log(`[Realtime]
-Channel: trip-sync-${tripId}
+                channel = supabase.channel(channelName);
+
+                if (tripId) {
+                    channel
+                        // 1. trip_members
+                        .on(
+                            "postgres_changes",
+                            {
+                                event: "*",
+                                schema: "public",
+                                table: "trip_members",
+                                filter: `trip_id=eq.${tripId}`
+                            },
+                            (payload: any) => {
+                                console.log(`[Realtime]
+Channel: ${channelName}
 Table: trip_members
 Event: ${payload.eventType}
 Timestamp: ${new Date().toISOString()}`);
-                            router.refresh();
-                        }
-                    )
-                    // 2. trip_invitations
-                    .on(
+                                router.refresh();
+                            }
+                        )
+                        // 2. trip_invitations
+                        .on(
+                            "postgres_changes",
+                            {
+                                event: "*",
+                                schema: "public",
+                                table: "trip_invitations",
+                                filter: `trip_id=eq.${tripId}`
+                            },
+                            (payload: any) => {
+                                console.log(`[Realtime]
+Channel: ${channelName}
+Table: trip_invitations
+Event: ${payload.eventType}
+Timestamp: ${new Date().toISOString()}`);
+                                router.refresh();
+                            }
+                        )
+                        // 3. expenses
+                        .on(
+                            "postgres_changes",
+                            {
+                                event: "*",
+                                schema: "public",
+                                table: "expenses",
+                                filter: `trip_id=eq.${tripId}`
+                            },
+                            (payload: any) => {
+                                console.log(`[Realtime]
+Channel: ${channelName}
+Table: expenses
+Event: ${payload.eventType}
+Timestamp: ${new Date().toISOString()}`);
+                                router.refresh();
+                            }
+                        )
+                        // 4. expense_shares
+                        .on(
+                            "postgres_changes",
+                            {
+                                event: "*",
+                                schema: "public",
+                                table: "expense_shares"
+                            },
+                            (payload: any) => {
+                                console.log(`[Realtime]
+Channel: ${channelName}
+Table: expense_shares
+Event: ${payload.eventType}
+Timestamp: ${new Date().toISOString()}`);
+                                router.refresh();
+                            }
+                        )
+                        // 5. trip_itineraries
+                        .on(
+                            "postgres_changes",
+                            {
+                                event: "*",
+                                schema: "public",
+                                table: "trip_itineraries",
+                                filter: `trip_id=eq.${tripId}`
+                            },
+                            (payload: any) => {
+                                console.log(`[Realtime]
+Channel: ${channelName}
+Table: trip_itineraries
+Event: ${payload.eventType}
+Timestamp: ${new Date().toISOString()}`);
+                                router.refresh();
+                            }
+                        );
+                } else {
+                    // Dashboard Sync
+                    channel.on(
                         "postgres_changes",
                         {
                             event: "*",
                             schema: "public",
                             table: "trip_invitations",
-                            filter: `trip_id=eq.${tripId}`
                         },
-                        (payload) => {
+                        (payload: any) => {
                             console.log(`[Realtime]
-Channel: trip-sync-${tripId}
+Channel: ${channelName}
 Table: trip_invitations
 Event: ${payload.eventType}
 Timestamp: ${new Date().toISOString()}`);
                             router.refresh();
                         }
-                    )
-                    // 3. expenses
-                    .on(
-                        "postgres_changes",
-                        {
-                            event: "*",
-                            schema: "public",
-                            table: "expenses",
-                            filter: `trip_id=eq.${tripId}`
-                        },
-                        (payload) => {
-                            console.log(`[Realtime]
-Channel: trip-sync-${tripId}
-Table: expenses
-Event: ${payload.eventType}
-Timestamp: ${new Date().toISOString()}`);
-                            router.refresh();
-                        }
-                    )
-                    // 4. expense_shares
-                    .on(
-                        "postgres_changes",
-                        {
-                            event: "*",
-                            schema: "public",
-                            table: "expense_shares"
-                        },
-                        (payload) => {
-                            console.log(`[Realtime]
-Channel: trip-sync-${tripId}
-Table: expense_shares
-Event: ${payload.eventType}
-Timestamp: ${new Date().toISOString()}`);
-                            router.refresh();
-                        }
-                    )
-                    // 5. trip_itineraries
-                    .on(
-                        "postgres_changes",
-                        {
-                            event: "*",
-                            schema: "public",
-                            table: "trip_itineraries",
-                            filter: `trip_id=eq.${tripId}`
-                        },
-                        (payload) => {
-                            console.log(`[Realtime]
-Channel: trip-sync-${tripId}
-Table: trip_itineraries
-Event: ${payload.eventType}
-Timestamp: ${new Date().toISOString()}`);
-                            router.refresh();
-                        }
-                    )
-                    .subscribe((status, err) => {
-                        if (!active) return;
+                    );
+                }
 
-                        const timestamp = new Date().toISOString();
+                channel.subscribe((status: string, err: any) => {
+                    if (!active) return;
 
-                        if (status === "SUBSCRIBED") {
-                            setStatus("connected");
-                            console.log(`[Realtime]
-Channel: trip-sync-${tripId}
+                    const timestamp = new Date().toISOString();
+
+                    if (status === "SUBSCRIBED") {
+                        setStatus("connected");
+                        console.log(`[Realtime]
+Channel: ${channelName}
 Status: SUBSCRIBED
 Timestamp: ${timestamp}`);
-                        } else if (status === "TIMED_OUT") {
-                            setStatus("disconnected");
-                            console.warn(`[Realtime]
-Channel: trip-sync-${tripId}
+                    } else if (status === "TIMED_OUT") {
+                        setStatus("disconnected");
+                        console.warn(`[Realtime]
+Channel: ${channelName}
 Status: TIMED_OUT
 Timestamp: ${timestamp}${err ? `\nError: ${JSON.stringify(err)}` : ""}`);
-                        } else if (status === "CHANNEL_ERROR") {
-                            setStatus("disconnected");
-                            console.error(`[Realtime]
-Channel: trip-sync-${tripId}
+                    } else if (status === "CHANNEL_ERROR") {
+                        setStatus("disconnected");
+                        console.error(`[Realtime]
+Channel: ${channelName}
 Status: CHANNEL_ERROR
 Timestamp: ${timestamp}
-Error: ${err ? JSON.stringify(err) : "Unknown error / Authorization failure"}
-Subscription Config: Listening to trip_members, trip_invitations, expenses, expense_shares, trip_itineraries`);
-                        } else if (status === "CLOSED") {
-                            setStatus("disconnected");
-                            if (isClosedNormally) {
-                                console.log(`[Realtime]
-Channel: trip-sync-${tripId}
+Error: ${err ? JSON.stringify(err) : "Unknown error / Authorization failure"}`);
+                    } else if (status === "CLOSED") {
+                        setStatus("disconnected");
+                        if (isClosedNormally) {
+                            console.log(`[Realtime]
+Channel: ${channelName}
 Status: CLOSED
 Timestamp: ${timestamp}
 Info: Realtime channel closed normally.`);
-                            } else {
-                                console.warn(`[Realtime]
-Channel: trip-sync-${tripId}
+                        } else {
+                            console.warn(`[Realtime]
+Channel: ${channelName}
 Status: CLOSED
 Timestamp: ${timestamp}
 Warning: Realtime channel closed unexpectedly.`);
-                            }
                         }
-                    });
+                    }
+                });
             } catch (setupError: any) {
                 if (!active) return;
                 setStatus("disconnected");
                 console.error(`[Realtime]
-Channel: trip-sync-${tripId}
+Channel: ${channelName}
 Status: SETUP_ERROR
 Timestamp: ${new Date().toISOString()}
 Error: ${setupError?.message || setupError}`);
@@ -191,6 +213,8 @@ Error: ${setupError?.message || setupError}`);
             }
         };
     }, [tripId, router, getToken]);
+
+    if (!tripId) return null;
 
     return (
         <div className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border shadow-sm transition-all duration-300">
